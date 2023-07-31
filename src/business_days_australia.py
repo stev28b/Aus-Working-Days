@@ -109,7 +109,7 @@ class BusinessDays:
         while self.is_business_day(next_business_day, state=state, datetime_format=datetime_format) is False:
             next_business_day = next_business_day - timedelta(days=1)
         if (type(date) == str and not force_return_datetime) or force_return_sting:
-            return self.convert_date_to_string(next_business_day, self.required_date_format, self,datetime_format)
+            return self.convert_date_to_string(next_business_day, self.required_date_format, self.datetime_format)
         else:
             return self.convert_date_to_datetime(next_business_day)
 
