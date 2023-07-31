@@ -113,7 +113,3 @@ class BusinessDays:
         else:
             return self.convert_date_to_datetime(next_business_day)
 
-# business_days = BusinessDays(state="nsw", datetime_format="%d/%m/%Y")
-# next = business_days.get_next_business_day("31/07/2023")
-# prev = business_days.get_previous_business_day("31/07/2023")
-# print('done')
