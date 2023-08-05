@@ -158,5 +158,3 @@ class BusinessDays:
         else:
             return self.convert_date_to_datetime(next_business_day)
 
-
-BusinessDays()
