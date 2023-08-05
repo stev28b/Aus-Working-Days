@@ -64,11 +64,16 @@ class BusinessDays:
         """
         import requests
         import json
-        response_data = requests.get(f'https://data.gov.au/data/api/3/action/datastore_search?resource_id={self.id}&limit={self.gov_entry_limit}').text
-        response = json.loads(response_data)
-        if response['result']['total'] > 0:
-            return response['result']['records']
-        raise ConnectionError
+        try:
+            response_data = requests.get(f'https://data.gov.au/data/api/3/action/datastore_search?resource_id={self.id}&limit={self.gov_entry_limit}').text
+            response = json.loads(response_data)
+            if response['result']['total'] > 0:
+                return response['result']['records']
+        finally:
+            import importlib.resources
+            with importlib.resources.open_text("business_days_australia", "public_holidays_australia.json") as file:
+                data = json.load(file)  
+            return
 
     def is_public_holiday(self, date, state: str = None, datetime_format: str = None) -> bool:
         """
