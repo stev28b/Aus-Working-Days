@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "business_days_australia"
+version = "0.0.1"
+dependencies = [
+    "requests",
+]
+
+[project.scripts]
+ozbiz = "business_days_australia"
