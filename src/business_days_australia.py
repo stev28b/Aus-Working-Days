@@ -1,5 +1,10 @@
 class BusinessDays:
-    def __init__(self, state=None, datetime_format="%Y%m%d"):
+    def __init__(self, state: str = None, datetime_format: str = "%Y%m%d"):
+        """
+        Create instance of business days - this only needs to be initiated once.
+        :param state: 3 letter abbreviation state code - If omitted or None - wil check if it is a national holiday. If state is provided - will check if public holiday for the specified state
+        :param datetime_format: if date is passed as a string - specify its datetime format
+        """
         from datetime import datetime
         self.id = '33673aca-0857-42e5-b8f0-9981b4755686'
         self.gov_entry_limit = 32000
@@ -10,7 +15,13 @@ class BusinessDays:
         self.public_holidays = self.get_public_holidays()
         return
 
-    def convert_date_to_datetime(self, date, datetime_format=None):
+    def convert_date_to_datetime(self, date, datetime_format: str = None):
+        """
+        Convert a date string into a datetime object
+        :param date: date as a string - if datetime object is passed, it will be returned as itself
+        :param datetime_format: if the date argument is passed as a string - specify its datetime format
+        :return: datetime object
+        """
         from datetime import datetime
         if datetime_format is None:
             datetime_format = self.datetime_format
@@ -23,7 +34,14 @@ class BusinessDays:
             raise TypeError
         return date
 
-    def convert_date_to_string(self, date, datetime_format=None, output_datetime_format=None):
+    def convert_date_to_string(self, date, datetime_format: str = None, output_datetime_format: str = None) -> str:
+        """
+        Convert a date into a specified date format string - used for public holiday search and for next/previous business day str output (if required)
+        :param date: datetime object or date as a string
+        :param datetime_format: if the date argument is passed as a string - specify its datetime format
+        :param output_datetime_format: string format to be output
+        :return: string date in specified format
+        """
         from datetime import datetime
         if datetime_format is None:
             datetime_format = self.datetime_format
@@ -38,12 +56,11 @@ class BusinessDays:
             return date_obj.strftime(output_datetime_format)
         else:
             raise TypeError
-        return
 
-    def get_public_holidays(self):
+    def get_public_holidays(self) -> list:
         """
         Get public holiday data from data.gov.au
-        :return:
+        :return: list of public holidays
         """
         import requests
         import json
@@ -53,12 +70,13 @@ class BusinessDays:
             return response['result']['records']
         raise ConnectionError
 
-    def is_public_holiday(self, date, state=None, datetime_format=None) -> bool:
+    def is_public_holiday(self, date, state: str = None, datetime_format: str = None) -> bool:
         """
         Determine if the date provided is a public holiday
         :param date: supports date as datetime object or string - string must be in the format yyyymmdd
-        :param state: 3 letter abbreviation state code - If ommited or None - wil check if it is a national holiday. If state is provided - will check if public holiday for the specified state
-        :return: bool - True > date is a pubic holiday; False > date is not a public holiday
+        :param state: 3 letter abbreviation state code - If omitted or None - wil check if it is a national holiday. If state is provided - will check if public holiday for the specified state
+        :param datetime_format: if date is passed as a string - specify its datetime format
+        :return: bool - True > date is a public holiday; False > date is not a public holiday
         """
         if state is None:
             state = self.state
@@ -73,8 +91,8 @@ class BusinessDays:
     def is_week_day(self, date, datetime_format=None) -> bool:
         """
         Determine if the date provided is a week day
-        :param date:
-        :param datetime_format:
+        :param date: date as datetime object or string
+        :param datetime_format: if date is passed as a string - specify its datetime format
         :return: bool - True > date is a weekday; False > date is a weekend (not a weekday)
         """
         date = self.convert_date_to_datetime(date, datetime_format)
@@ -84,12 +102,29 @@ class BusinessDays:
         # Check if it's a working day (Monday to Friday)
         return 0 <= day_of_week <= 4
 
-    def is_business_day(self, date, state=None, datetime_format=None):
+    def is_business_day(self, date, state: str = None, datetime_format: str = None) -> bool:
+        """
+        Determine if the date given is a valid business day
+        :param date: date as datetime object or string
+        :param state: 3 letter abbreviation state code - If omitted or None - wil check if it is a national holiday. If state is provided - will check if public holiday for the specified state
+        :param datetime_format: if date is passed as a string - specify its datetime format
+        :return:
+        """
         if self.is_week_day(date=date, datetime_format=datetime_format) and not self.is_public_holiday(date=date, state=state, datetime_format=datetime_format):
             return True
         return False
 
-    def get_next_business_day(self, date, state=None, datetime_format=None, include_current_date=True, force_return_sting=False, force_return_datetime=False):
+    def get_next_business_day(self, date, state=None, datetime_format: str = None, include_current_date: bool = True, force_return_sting: bool = False, force_return_datetime: bool = False):
+        """
+        Determine if date given is a valid business day and return its date - if it is not find the next available business day date.
+        :param date: date as datetime object or string
+        :param state: Australian state to be searched for public holidays - If None it will search to see if it is a National public holiday
+        :param datetime_format: if date is passed as a string - specify its datetime format
+        :param include_current_date: Default True - can return the given date if valid business day; False - always return date in future of given date (do not return date given)
+        :param force_return_sting: True - return date is to be string; False - input date type to be returned unless specified otherwise
+        :param force_return_datetime: True - return date is to be datetime object; False - input date type to be returned unless specified otherwise
+        :return: date of the next valid business day
+        """
         from datetime import timedelta
         next_business_day = self.convert_date_to_datetime(date)
         if not include_current_date:
@@ -101,7 +136,17 @@ class BusinessDays:
         else:
             return self.convert_date_to_datetime(next_business_day)
 
-    def get_previous_business_day(self, date, state=None, datetime_format=None, include_current_date=True, force_return_sting=False, force_return_datetime=False):
+    def get_previous_business_day(self, date, state: str = None, datetime_format: str = None, include_current_date: bool = True, force_return_sting: bool = False, force_return_datetime: bool = False):
+        """
+        Determine if date given is a valid business day and return its date - if it is not find the previous available business day date.
+        :param date: date as datetime object or string
+        :param state: Australian state to be searched for public holidays - If None it will search to see if it is a National public holiday
+        :param datetime_format: if date is passed as a string - specify its datetime format
+        :param include_current_date: Default True - can return the given date if valid business day; False - always return date in past of given date (do not return date given)
+        :param force_return_sting: True - return date is to be string; False - input date type to be returned unless specified otherwise
+        :param force_return_datetime: True - return date is to be datetime object; False - input date type to be returned unless specified otherwise
+        :return: date of the previous valid business day
+        """
         from datetime import timedelta
         next_business_day = self.convert_date_to_datetime(date)
         if not include_current_date:
@@ -113,3 +158,5 @@ class BusinessDays:
         else:
             return self.convert_date_to_datetime(next_business_day)
 
+
+BusinessDays()
