@@ -1,5 +1,5 @@
 class BusinessDays:
-    def __init__(self, state: str = None, datetime_format: str = "%Y%m%d"):
+    def __init__(self, state: str = None, datetime_format: str = "%d/%m/%Y"):
         """
         Create instance of business days - this only needs to be initiated once.
         :param state: 3 letter abbreviation state code - If omitted or None - wil check if it is a national holiday. If state is provided - will check if public holiday for the specified state
@@ -71,9 +71,9 @@ class BusinessDays:
                 return response['result']['records']
         finally:
             import importlib.resources
-            with importlib.resources.open_text("business_days_australia", "public_holidays_australia.json") as file:
-                data = json.load(file)  
-            return
+            with importlib.resources.open_text("business_days_australia.public_holidays", "public_holidays_australia.json") as file:
+                data = json.load(file)
+            return data
 
     def is_public_holiday(self, date, state: str = None, datetime_format: str = None) -> bool:
         """
@@ -92,6 +92,24 @@ class BusinessDays:
         elif state is None:
             return False
         return any(holiday.get('Date') == date and holiday.get('Jurisdiction') == state.lower() for holiday in self.public_holidays)
+
+    def get_public_holiday(self, date, state: str = None, datetime_format: str = None) -> list:
+        """
+        Return public holiday details for date provided.
+        :param date: supports date as datetime object or string - string must be in the format yyyymmdd
+        :param state: 3 letter abbreviation state code - If omitted or None - wil check if it is a national holiday. If state is provided - will check if public holiday for the specified state
+        :param datetime_format: if date is passed as a string - specify its datetime format
+        :return: list - all public holidays for the given date (public holidays may be different between states)
+        """
+        if state is None:
+            state = self.state
+        date = self.convert_date_to_string(date, datetime_format)
+        # check if it is a national public holiday
+        if state is None and sum(1 for holiday in self.public_holidays if holiday.get('Date') == date) == 8:
+            return [holiday for holiday in self.public_holidays if holiday.get('Date') == date]
+        elif state is None:
+            return []
+        return [holiday for holiday in self.public_holidays if holiday.get('Date') == date and holiday.get('Jurisdiction') == state.lower()]
 
     def is_week_day(self, date, datetime_format=None) -> bool:
         """
@@ -131,15 +149,16 @@ class BusinessDays:
         :return: date of the next valid business day
         """
         from datetime import timedelta
-        next_business_day = self.convert_date_to_datetime(date)
+        next_business_day = self.convert_date_to_datetime(date, datetime_format)
         if not include_current_date:
             next_business_day = next_business_day + timedelta(days=1)
         while self.is_business_day(next_business_day, state=state, datetime_format=datetime_format) is False:
             next_business_day = next_business_day + timedelta(days=1)
         if (type(date) == str and not force_return_datetime) or force_return_sting:
-            return self.convert_date_to_string(next_business_day)
+            return self.convert_date_to_string(next_business_day, datetime_format=self.required_date_format,
+                                               output_datetime_format=(lambda self, datetime_format: self.datetime_format if datetime_format is None else datetime_format)(self, datetime_format))
         else:
-            return self.convert_date_to_datetime(next_business_day)
+            return self.convert_date_to_datetime(next_business_day, datetime_format)
 
     def get_previous_business_day(self, date, state: str = None, datetime_format: str = None, include_current_date: bool = True, force_return_sting: bool = False, force_return_datetime: bool = False):
         """
@@ -153,13 +172,24 @@ class BusinessDays:
         :return: date of the previous valid business day
         """
         from datetime import timedelta
-        next_business_day = self.convert_date_to_datetime(date)
+        next_business_day = self.convert_date_to_datetime(date, datetime_format)
         if not include_current_date:
             next_business_day = next_business_day - timedelta(days=1)
         while self.is_business_day(next_business_day, state=state, datetime_format=datetime_format) is False:
             next_business_day = next_business_day - timedelta(days=1)
         if (type(date) == str and not force_return_datetime) or force_return_sting:
-            return self.convert_date_to_string(next_business_day, self.required_date_format, self.datetime_format)
+            return self.convert_date_to_string(next_business_day, datetime_format=self.required_date_format,
+                                               output_datetime_format=(lambda self, datetime_format: self.datetime_format if datetime_format is None else datetime_format)(self, datetime_format))
         else:
             return self.convert_date_to_datetime(next_business_day)
 
+
+class State:
+    australian_capital_territory = 'act'
+    new_south_wales = 'nsw'
+    northern_territory = 'nt'
+    queensland = 'qld'
+    south_australia = 'sa'
+    tasmania = 'tas'
+    victoria = 'vic'
+    western_australia = 'wa'
