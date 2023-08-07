@@ -5,9 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "business_days_australia"
 version = "0.0.1"
+readme = "README.md"
+description = "Check if date is a valid business day in Australia or a specific state."
 dependencies = [
     "requests",
 ]
 
 [project.scripts]
-ozbiz = "business_days_australia"
+ozbiz = "business_days_australia.__main__:main"
